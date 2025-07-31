@@ -6,7 +6,7 @@ import flixel.util.FlxTimer;
 import flixel.math.FlxMath;
 import flixel.FlxG;
 
-class DirectionalNoteDisplacement extends Module {
+class NoteCameraDisplacement extends Module {
 	/**
 	 * Enable the displacement.
 	 */
@@ -28,7 +28,7 @@ class DirectionalNoteDisplacement extends Module {
 	var sustainDisplacement:Bool = true;
 
 	public function new() {
-		super('Directional Note Displacement');
+		super('Note Camera Displacement');
 	}
 
 	function getDisplacementValue(direction:Int):Array<Float> {
@@ -44,7 +44,7 @@ class DirectionalNoteDisplacement extends Module {
 	// fuckin hate vslice man
 	/* override public function onSongStart(event):Void {
 		super.onSongStart(event);
-		// ModuleHandler.getModule('Directional Note Displacement').scriptSet('displacement', 50);
+		// ModuleHandler.getModule('Note Camera Displacement').scriptSet('displacement', 50);
 	} */
 
 	public var camTarget:String = 'none';
