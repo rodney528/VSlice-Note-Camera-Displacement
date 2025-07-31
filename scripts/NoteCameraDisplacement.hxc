@@ -52,13 +52,12 @@ class NoteCameraDisplacement extends Module {
 		super.onSongEvent(event);
 		if (event.eventData.eventKind == 'FocusCamera') {
 			var prevTarget:String = camTarget;
-			// switch (Std.parseInt(event.eventData.value.char)) {
-			// 	case -1: camTarget = 'none';
-			// 	case 0: camTarget = 'player';
-			// 	case 1: camTarget = 'opponent';
-			// 	case 2: camTarget = 'spectator';
-			// }
-			camTarget = 'player';
+			switch (Std.parseInt(event.eventData.value.char)) {
+				case -1: camTarget = 'none';
+				case 0: camTarget = 'player';
+				case 1: camTarget = 'opponent';
+				case 2: camTarget = 'spectator';
+			}
 			if (camTarget != prevTarget) {
 				FlxG.camera.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
 				FlxG.camera.targetOffset.set();
