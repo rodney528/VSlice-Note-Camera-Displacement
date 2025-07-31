@@ -1,4 +1,6 @@
 import funkin.modding.module.ModuleHandler;
+import funkin.play.notes.SustainTrail;
+// import funkin.play.notes.NoteSprite;
 import funkin.modding.module.Module;
 import funkin.play.PlayState;
 import funkin.util.Constants;
@@ -69,7 +71,7 @@ class NoteCameraDisplacement extends Module {
 		opponent: [],
 		player: []
 	}
-	function addHold(hold, isPlayer:Bool) {
+	function addHold(hold:SustainTrail, isPlayer:Bool):Void {
 		if (isPlayer) {
 			if (!encounteredHolds.player.contains(hold))
 				encounteredHolds.player.push(hold);
@@ -78,14 +80,14 @@ class NoteCameraDisplacement extends Module {
 				encounteredHolds.opponent.push(hold);
 		}
 	}
-	function removeHold(hold) {
+	function removeHold(hold:SustainTrail):Void {
 		if (encounteredHolds.opponent.contains(hold))
 			encounteredHolds.opponent.push(hold);
 		if (encounteredHolds.player.contains(hold))
 			encounteredHolds.player.push(hold);
 	}
-	function getHolds(?isPlayer:Bool) {
-		switch (isPlayer) {
+	function getHolds(?isPlayer:Bool):Array<SustainTrail> {
+		return switch (isPlayer) {
 			case false: encounteredHolds.opponent;
 			case true: encounteredHolds.player;
 			case null: [
@@ -109,8 +111,7 @@ class NoteCameraDisplacement extends Module {
 				if (hold.hitNote && !hold.missedNote && hold.sustainLength > 0) {
 					var percentMath:Float = 1;
 					percentMath = FlxMath.bound(FlxMath.remapToRange(hold.sustainLength, 0, hold.fullSustainLength, 0, 1), 0, 1);
-					var value = getDisplacementValue(hold.noteDirection);
-					trace(percentMath);
+					var value:Array<Float> = getDisplacementValue(hold.noteDirection);
 					FlxG.camera.targetOffset.set(value[0] * percentMath, value[1] * percentMath);
 				}
 			}
@@ -132,17 +133,16 @@ class NoteCameraDisplacement extends Module {
 
 			if (enableDisplacement) {
 				FlxG.camera.targetOffset.set();
-				var value = getDisplacementValue(event.note.direction);
+				var value:Array<Float> = getDisplacementValue(event.note.direction);
 				FlxG.camera.targetOffset.set(value[0], value[1]);
 			}
 			FlxG.camera.followLerp = (Constants.DEFAULT_CAMERA_FOLLOW_RATE * velocity) / FlxG.camera.zoom;
 
 			if (resetTimer.active) resetTimer.cancel();
 			resetTimer.start((event.note.length / 1000) + (PlayState.instance.conductorInUse.stepLengthMs * (event.note.length > 0 ? 0.1 : 1.6)), (_) -> {
-				// ranCode = false;
-				if (enableDisplacement)
-					FlxG.camera.targetOffset.set();
 				FlxG.camera.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
+				FlxG.camera.targetOffset.set();
+				ranCode = false;
 			});
 		}
 	}
