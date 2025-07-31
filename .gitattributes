@@ -1,0 +1,4 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+# Make GitHub recognize .hxc files as Haxe files
+*.hxc linguist-language=Haxe

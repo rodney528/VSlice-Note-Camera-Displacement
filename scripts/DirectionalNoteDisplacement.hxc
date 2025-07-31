@@ -1,0 +1,169 @@
+import funkin.modding.module.ModuleHandler;
+import funkin.modding.module.Module;
+import funkin.play.PlayState;
+import funkin.util.Constants;
+import flixel.util.FlxTimer;
+import flixel.math.FlxMath;
+import flixel.FlxG;
+
+class DirectionalNoteDisplacement extends Module {
+	/**
+	 * Enable the displacement.
+	 */
+	var enableDisplacement:Bool = true;
+
+	/**
+	 * The amount of displacement the notes can create.
+	 */
+	var displacement:Float = 30;
+	/**
+	 * Change camera speed when hitting notes (reverts when none are being hit).
+	 */
+	var velocity:Float = 1.5;
+	/**
+	 * With this on the camera will slowly lose its displacement instead of just moving back at the end of a note.
+	 *
+	 * NOTE: EXPERIMENTAL! Doesn't completely work yet!
+	 */
+	var sustainDisplacement:Bool = true;
+
+	public function new() {
+		super('Directional Note Displacement');
+	}
+
+	function getDisplacementValue(direction:Int):Array<Float> {
+		var amount:Float = displacement / FlxG.camera.zoom;
+		return switch (direction) {
+			case 0: [-amount, 0];
+			case 1: [0, amount];
+			case 2: [0, -amount];
+			case 3: [amount, 0];
+		}
+	}
+
+	// fuckin hate vslice man
+	/* override public function onSongStart(event):Void {
+		super.onSongStart(event);
+		// ModuleHandler.getModule('Directional Note Displacement').scriptSet('displacement', 50);
+	} */
+
+	public var camTarget:String = 'none';
+	override public function onSongEvent(event):Void {
+		super.onSongEvent(event);
+		if (event.eventData.eventKind == 'FocusCamera') {
+			var prevTarget:String = camTarget;
+			// switch (Std.parseInt(event.eventData.value.char)) {
+			// 	case -1: camTarget = 'none';
+			// 	case 0: camTarget = 'player';
+			// 	case 1: camTarget = 'opponent';
+			// 	case 2: camTarget = 'spectator';
+			// }
+			camTarget = 'player';
+			if (camTarget != prevTarget) {
+				FlxG.camera.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
+				FlxG.camera.targetOffset.set();
+			}
+		}
+	}
+
+	var encounteredHolds = {
+		opponent: [],
+		player: []
+	}
+	function addHold(hold, isPlayer:Bool) {
+		if (isPlayer) {
+			if (!encounteredHolds.player.contains(hold))
+				encounteredHolds.player.push(hold);
+		} else {
+			if (!encounteredHolds.opponent.contains(hold))
+				encounteredHolds.opponent.push(hold);
+		}
+	}
+	function removeHold(hold) {
+		if (encounteredHolds.opponent.contains(hold))
+			encounteredHolds.opponent.push(hold);
+		if (encounteredHolds.player.contains(hold))
+			encounteredHolds.player.push(hold);
+	}
+	function getHolds(?isPlayer:Bool) {
+		switch (isPlayer) {
+			case false: encounteredHolds.opponent;
+			case true: encounteredHolds.player;
+			case null: [
+				for (array in [encounteredHolds.opponent, encounteredHolds.player])
+					for (hold in array)
+						hold
+			];
+		}
+	}
+
+	var ranCode:Bool = false;
+	override public function onUpdate(event):Void {
+		super.onUpdate(event);
+		if (PlayState.instance != null && ranCode && enableDisplacement && sustainDisplacement) {
+			for (hold in getHolds(switch (camTarget) {
+				case 'opponent': false;
+				case 'player': true;
+				default: null;
+			})) {
+				if (hold == null || !hold.alive) continue;
+				if (hold.hitNote && !hold.missedNote && hold.sustainLength > 0) {
+					var percentMath:Float = 1;
+					percentMath = FlxMath.bound(FlxMath.remapToRange(hold.sustainLength, 0, hold.fullSustainLength, 0, 1), 0, 1);
+					var value = getDisplacementValue(hold.noteDirection);
+					trace(percentMath);
+					FlxG.camera.targetOffset.set(value[0] * percentMath, value[1] * percentMath);
+				}
+			}
+		}
+	}
+
+	var resetTimer:FlxTimer = new FlxTimer();
+	override public function onNoteHit(event):Void {
+		super.onNoteHit(event);
+
+		if (PlayState.instance != null) {
+			var runCode:Bool = ranCode = if (event.note.noteData.getMustHitNote() && camTarget == 'player') true;
+			else if (!event.note.noteData.getMustHitNote() && camTarget == 'opponent') true;
+			else if (camTarget == 'none') true;
+			else false;
+
+			addHold(event.note.holdNoteSprite, event.note.noteData.getMustHitNote());
+			if (!runCode) return;
+
+			if (enableDisplacement) {
+				FlxG.camera.targetOffset.set();
+				var value = getDisplacementValue(event.note.direction);
+				FlxG.camera.targetOffset.set(value[0], value[1]);
+			}
+			FlxG.camera.followLerp = (Constants.DEFAULT_CAMERA_FOLLOW_RATE * velocity) / FlxG.camera.zoom;
+
+			if (resetTimer.active) resetTimer.cancel();
+			resetTimer.start((event.note.length / 1000) + (PlayState.instance.conductorInUse.stepLengthMs * (event.note.length > 0 ? 0.1 : 1.6)), (_) -> {
+				// ranCode = false;
+				if (enableDisplacement)
+					FlxG.camera.targetOffset.set();
+				FlxG.camera.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
+			});
+		}
+	}
+
+	override public function onNoteMiss(event):Void {
+		super.onNoteMiss(event);
+		generalNoteMiss(event, false);
+	}
+	override public function onNoteHoldDrop(event):Void {
+		super.onNoteHoldDrop(event);
+		generalNoteMiss(event, true);
+	}
+
+	function generalNoteMiss(event, isHold:Bool):Void {
+		if (PlayState.instance != null && camTarget == 'player') {
+			ranCode = false;
+			removeHold(event.holdNote);
+			if (resetTimer.active) resetTimer.cancel();
+			FlxG.camera.targetOffset.set();
+			PlayState.instance.resetCamera();
+		}
+	}
+}

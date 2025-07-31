@@ -1,0 +1,12 @@
+{
+	"title": "Camera Note Displacement",
+	"description": "Displaces the camera position in the direction of notes you hit.",
+	"contributors": [
+		{
+			"name": "💜 Rodney, An Imaginative Furball 💙",
+			"role": "The only guy who worked on this."
+		}
+	],
+	"api_version": "0.7.3",
+	"mod_version": "0.1.0"
+}
