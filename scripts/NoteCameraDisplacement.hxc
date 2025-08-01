@@ -1,9 +1,10 @@
-import funkin.modding.module.ModuleHandler;
-import funkin.play.notes.SustainTrail;
-// import funkin.play.notes.NoteSprite;
+// import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.Module;
+
+import funkin.play.notes.SustainTrail;
 import funkin.play.PlayState;
 import funkin.util.Constants;
+
 import flixel.util.FlxTimer;
 import flixel.math.FlxMath;
 import flixel.FlxG;
@@ -140,9 +141,10 @@ class NoteCameraDisplacement extends Module {
 
 			if (resetTimer.active) resetTimer.cancel();
 			resetTimer.start((event.note.length / 1000) + (PlayState.instance.conductorInUse.stepLengthMs * (event.note.length > 0 ? 0.1 : 1.6)), (_) -> {
-				FlxG.camera.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
-				FlxG.camera.targetOffset.set();
 				ranCode = false;
+				if (enableDisplacement)
+					FlxG.camera.targetOffset.set();
+				FlxG.camera.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
 			});
 		}
 	}
