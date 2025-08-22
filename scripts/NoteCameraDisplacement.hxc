@@ -62,6 +62,7 @@ class NoteCameraDisplacement extends Module {
 				case 2: camTarget = 'spectator';
 			}
 			if (camTarget != prevTarget) {
+				if (resetTimer.active) resetTimer.cancel();
 				FlxG.camera.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
 				FlxG.camera.targetOffset.set();
 			}
@@ -140,7 +141,7 @@ class NoteCameraDisplacement extends Module {
 			FlxG.camera.followLerp = (Constants.DEFAULT_CAMERA_FOLLOW_RATE * velocity) / FlxG.camera.zoom;
 
 			if (resetTimer.active) resetTimer.cancel();
-			resetTimer.start((event.note.length / 1000) + (PlayState.instance.conductorInUse.stepLengthMs * (event.note.length > 0 ? 0.1 : 1.6)), (_) -> {
+			resetTimer.start(event.note.length / 1000 + (event.note.length > 0 ? 0.1 : 0.3), (_) -> {
 				ranCode = false;
 				if (enableDisplacement)
 					FlxG.camera.targetOffset.set();
