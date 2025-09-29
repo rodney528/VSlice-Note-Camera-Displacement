@@ -7,7 +7,6 @@ import funkin.util.Constants;
 
 import flixel.util.FlxTimer;
 import flixel.math.FlxMath;
-import flixel.FlxG;
 
 class NoteCameraDisplacement extends Module {
 	/**
@@ -35,7 +34,7 @@ class NoteCameraDisplacement extends Module {
 	}
 
 	function getDisplacementValue(direction:Int):Array<Float> {
-		var amount:Float = displacement / FlxG.camera.zoom;
+		var amount:Float = displacement / PlayState.instance.camGame.zoom;
 		return switch (direction) {
 			case 0: [-amount, 0];
 			case 1: [0, amount];
@@ -63,8 +62,8 @@ class NoteCameraDisplacement extends Module {
 			}
 			if (camTarget != prevTarget) {
 				if (resetTimer.active) resetTimer.cancel();
-				FlxG.camera.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
-				FlxG.camera.targetOffset.set();
+				PlayState.instance.camGame.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
+				PlayState.instance.camGame.targetOffset.set();
 			}
 		}
 	}
@@ -114,7 +113,8 @@ class NoteCameraDisplacement extends Module {
 					var percentMath:Float = 1;
 					percentMath = FlxMath.bound(FlxMath.remapToRange(hold.sustainLength, 0, hold.fullSustainLength, 0, 1), 0, 1);
 					var value:Array<Float> = getDisplacementValue(hold.noteDirection);
-					FlxG.camera.targetOffset.set(value[0] * percentMath, value[1] * percentMath);
+					PlayState.instance.camGame.targetOffset.set(value[0] * percentMath, value[1] * percentMath);
+					// trace('Hold Note: ' + percentMath);
 				}
 			}
 		}
@@ -134,18 +134,19 @@ class NoteCameraDisplacement extends Module {
 			if (!runCode) return;
 
 			if (enableDisplacement) {
-				FlxG.camera.targetOffset.set();
+				PlayState.instance.camGame.targetOffset.set();
 				var value:Array<Float> = getDisplacementValue(event.note.direction);
-				FlxG.camera.targetOffset.set(value[0], value[1]);
+				PlayState.instance.camGame.targetOffset.set(value[0], value[1]);
 			}
-			FlxG.camera.followLerp = (Constants.DEFAULT_CAMERA_FOLLOW_RATE * velocity) / FlxG.camera.zoom;
+			PlayState.instance.camGame.followLerp = (Constants.DEFAULT_CAMERA_FOLLOW_RATE * velocity) / PlayState.instance.camGame.zoom;
 
 			if (resetTimer.active) resetTimer.cancel();
 			resetTimer.start(event.note.length / 1000 + (event.note.length > 0 ? 0.1 : 0.3), (_) -> {
 				ranCode = false;
 				if (enableDisplacement)
-					FlxG.camera.targetOffset.set();
-				FlxG.camera.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
+					PlayState.instance.camGame.targetOffset.set();
+				PlayState.instance.camGame.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
+				// trace('Timer Done');
 			});
 		}
 	}
@@ -160,11 +161,11 @@ class NoteCameraDisplacement extends Module {
 	}
 
 	function generalNoteMiss(event, isHold:Bool):Void {
-		if (PlayState.instance != null && camTarget == 'player') {
+		if (camTarget == 'player') {
 			ranCode = false;
 			removeHold(event.holdNote);
 			if (resetTimer.active) resetTimer.cancel();
-			FlxG.camera.targetOffset.set();
+			PlayState.instance.camGame.targetOffset.set();
 			PlayState.instance.resetCamera();
 		}
 	}
