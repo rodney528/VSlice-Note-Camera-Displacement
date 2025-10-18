@@ -121,6 +121,15 @@ class NoteCameraDisplacement extends Module {
 	}
 
 	var resetTimer:FlxTimer = new FlxTimer();
+	override public function onPause(event):Void {
+		super.onPause(event);
+		resetTimer.active = false;
+	}
+	override public function onResume(event):Void {
+		super.onResume(event);
+		resetTimer.active = true;
+	}
+
 	override public function onNoteHit(event):Void {
 		super.onNoteHit(event);
 
