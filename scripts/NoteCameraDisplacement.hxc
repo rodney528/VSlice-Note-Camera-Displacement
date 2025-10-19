@@ -1,4 +1,3 @@
-// import funkin.modding.module.ModuleHandler;
 import funkin.modding.module.Module;
 
 import funkin.play.notes.SustainTrail;
@@ -24,10 +23,13 @@ class NoteCameraDisplacement extends Module {
 	var velocity:Float = 1.5;
 	/**
 	 * With this on the camera will slowly lose its displacement instead of just moving back at the end of a note.
-	 *
-	 * NOTE: EXPERIMENTAL! Doesn't completely work yet!
 	 */
 	var sustainDisplacement:Bool = true;
+
+	/**
+	 * Due to the script setting `camGame.followLerp` this var kinda needs to exist if you want to edit followLerp at all.
+	 */
+	var cameraSpeed:Float = 1;
 
 	public function new() {
 		super('Note Camera Displacement');
@@ -43,11 +45,22 @@ class NoteCameraDisplacement extends Module {
 		}
 	}
 
-	// fuckin hate vslice man
-	/* override public function onSongStart(event):Void {
+	/**
+	simple example for setting the vars in other scripts
+	```haxe
+	import funkin.modding.module.ModuleHandler;
+	// does setting this actually work?
+	var camNoteMove = ModuleHandler.getModule('Note Camera Displacement');
+	override public function onSongStart(event):Void {
 		super.onSongStart(event);
-		// ModuleHandler.getModule('Note Camera Displacement').scriptSet('displacement', 50);
-	} */
+		camNoteMove.displacement = 50;
+	}
+	override public function onSongEnd(event):Void {
+		super.onSongEnd(event);
+		camNoteMove.displacement = 30;
+	}
+	```
+	**/
 
 	public var camTarget:String = 'none';
 	override public function onSongEvent(event):Void {
@@ -62,7 +75,7 @@ class NoteCameraDisplacement extends Module {
 			}
 			if (camTarget != prevTarget) {
 				if (resetTimer.active) resetTimer.cancel();
-				PlayState.instance.camGame.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
+				PlayState.instance.camGame.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE * cameraSpeed;
 				PlayState.instance.camGame.targetOffset.set();
 			}
 		}
@@ -147,15 +160,15 @@ class NoteCameraDisplacement extends Module {
 				var value:Array<Float> = getDisplacementValue(event.note.direction);
 				PlayState.instance.camGame.targetOffset.set(value[0], value[1]);
 			}
-			PlayState.instance.camGame.followLerp = (Constants.DEFAULT_CAMERA_FOLLOW_RATE * velocity) / PlayState.instance.camGame.zoom;
+			PlayState.instance.camGame.followLerp = (Constants.DEFAULT_CAMERA_FOLLOW_RATE * cameraSpeed * velocity) / PlayState.instance.camGame.zoom;
 
 			if (resetTimer.active) resetTimer.cancel();
-			resetTimer.start(event.note.length / 1000 + (event.note.length > 0 ? 0.1 : 0.3), (_) -> {
+			var timeLength:Float = event.note.length > 0 ? PlayState.instance.conductorInUse.stepLengthMs * 1.6 + event.note.length : PlayState.instance.conductorInUse.stepLengthMs * 1.6;
+			resetTimer.start(timeLength / 1000, (_) -> {
 				ranCode = false;
 				if (enableDisplacement)
 					PlayState.instance.camGame.targetOffset.set();
-				PlayState.instance.camGame.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE;
-				// trace('Timer Done');
+				PlayState.instance.camGame.followLerp = Constants.DEFAULT_CAMERA_FOLLOW_RATE * cameraSpeed;
 			});
 		}
 	}
